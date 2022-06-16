@@ -1,7 +1,10 @@
 import { Request, Response } from "express"
+import { getManager } from "typeorm";
 import { registerValidation } from "../validation/register.validation";
+import { User } from "../entity/user.entity";
+import bcryptjs from "bcryptjs";
 
-export const Register = (req: Request, res: Response) => {
+export const Register = async (req: Request, res: Response) => {
     const body = req.body;
 
     const bodycheck = registerValidation.validate(body);
@@ -19,5 +22,37 @@ export const Register = (req: Request, res: Response) => {
         }
         );
     }
-    res.send(body); //returns body from request
+ 
+    const repository = getManager().getRepository(User)
+
+    const {password, ...user} = await repository.save({
+        first_name: body.first_name,
+        last_name: body.last_name,
+        email: body.email,
+        password: await bcryptjs.hash(body.password, 10)
+    })
+
+    res.send(user);
+} 
+
+export const Login = async (req: Request, res: Response) => {
+
+    const repository = getManager().getRepository(User);
+
+    //const user = await repository.findOne({where:   {email: req.body.email}     });
+    const user = await repository.findOneBy({email: req.body.email});
+
+    if(!user) {
+        return res.status(404).send({
+            message: "User not found"
+        })
+    }
+
+    if(!await bcryptjs.compare(req.body.password, user.password)) {
+        return res.status(400).send({
+            message: "Invalid credentials"
+        })
+    }
+    res.send(user);
+
 }
