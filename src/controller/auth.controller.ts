@@ -3,6 +3,8 @@ import { getManager } from "typeorm";
 import { registerValidation } from "../validation/register.validation";
 import { User } from "../entity/user.entity";
 import bcryptjs from "bcryptjs";
+import { sign } from "jsonwebtoken";
+import { verify } from "jsonwebtoken";
 
 export const Register = async (req: Request, res: Response) => {
     const body = req.body;
@@ -44,7 +46,7 @@ export const Login = async (req: Request, res: Response) => {
 
     if(!user) {
         return res.status(404).send({
-            message: "User not found"
+            message: "Invalid credentials"
         })
     }
 
@@ -53,6 +55,39 @@ export const Login = async (req: Request, res: Response) => {
             message: "Invalid credentials"
         })
     }
-    res.send(user);
 
+    const payload = {
+        id: user.id
+    }
+    const token = sign(payload, "secret")
+
+    res.cookie('jwt', token, {
+        httpOnly: true, //only accessible by the backend, more secure
+        maxAge: 24*60*60*1000 //one day
+    })
+
+ //   const {password, ...data} = user
+
+    res.send({
+        message: "success"
+    });
+
+}
+
+
+export const authenticatedUser = async (req: Request, res: Response) => {
+    const jwt = req.cookies['jwt'];
+
+    //using the cookie
+    const payload: any = verify(jwt, "secret") // secret is the keyword used when creating the token
+    if (!payload) {
+        return res.status(401).send({
+            message: "User not authenticated"
+        })
+    }
+    const repository = getManager().getRepository(User);
+
+    const {password, ...user} = await repository.findOneBy({id: payload.id})
+
+    res.send(user)
 }

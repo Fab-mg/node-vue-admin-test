@@ -2,16 +2,19 @@ import express, {Request, Response} from 'express';
 import cors from 'cors';
 import {routes} from "./routes";
 import  {createConnection} from 'typeorm';
+import cookieParser from 'cookie-parser';
 
 createConnection().then(connection => {
 
 const app = express()
 
 app.use(express.json())
+app.use(cookieParser()) //makes cookie parsing easy
 
 //cors is for port configuration cause our app will run on different port 
 // front port vs back port
 app.use(cors({
+    credentials: true, //   <-- make cookie available in frontend
     origin: ["http://localhost:3000"]
 }))
 
