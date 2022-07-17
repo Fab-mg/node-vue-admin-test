@@ -59,7 +59,7 @@ export const Login = async (req: Request, res: Response) => {
     // }
     
     const {password, ...payload2} = user;
-    const token = sign(payload2, "secretWord");
+    const token = sign(payload2, process.env.SECRET_KEY);
 
     res.cookie('jwtCookie', token, {
         httpOnly: true, // accessible only to the back end, more secure
@@ -72,18 +72,59 @@ export const Login = async (req: Request, res: Response) => {
 }
 
 export const AuthenticatedUser = async (req: Request, res: Response) => {
-    const jwtCookie = req.cookies['jwtCookie'];
+    return res.send(req["user"]) //user is parsed in the authMiddleware
+}
 
-    const payload : any = verify(jwtCookie, "secretWord")
+export const Logout = async (req: Request, res: Response) => {
+    const jwtCookie = res.cookie('jwtCookie', {
+        maxAge: 0
+    })
 
-    if(!payload) {
-        return  res.status(401).send({
-            message: "Unauthenticated"
-        })
+    return res.send({
+        message: "Logout successfully"
+    })
+}
+
+export const UpdateInfo = async (req: Request, res: Response) => {
+    const body = req.body;
+
+    const bodycheck = registerValidation.validate(body);
+
+    //check the body
+    //catch error if any (400) error status
+
+    if(bodycheck.error) {
+        return res.status(400).send(bodycheck.error.details);
     }
 
-    const repository = getManager().getRepository(User);
-    const {password,...authUser} = await repository.findOneBy({id: payload.id})    
+    const user = req['user']
+    const repository = getManager().getRepository(User)
+    await repository.update(user.id, {
+        first_name: body.first_name,
+        last_name: body.last_name,
+        email: body.email
+    })
 
-    res.send(authUser)
+    const {password,...data} = await repository.findOneBy({id: user.id})
+    return res.send(data)
+}
+
+export const UpdatePassword = async (req: Request, res: Response) => {
+    const user = req['user']
+    const body = req.body
+
+    if(body.password !== body.password_confirm) {
+        return res.status(400).send({
+            message: "Password do not match"
+        }
+        );
+    }
+
+    const repository = getManager().getRepository(User)
+    await repository.update(user.id, {
+        password: await bcryptjs.hash(body.password, 10)
+    })
+
+    const /*{password,...data}*/ data = await repository.findOneBy({id: user.id})
+    return res.send(data)
 }
