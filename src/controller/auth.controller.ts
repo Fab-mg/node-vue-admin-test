@@ -116,8 +116,7 @@ export const UpdatePassword = async (req: Request, res: Response) => {
     if(body.password !== body.password_confirm) {
         return res.status(400).send({
             message: "Password do not match"
-        }
-        );
+        });
     }
 
     const repository = getManager().getRepository(User)
@@ -125,6 +124,6 @@ export const UpdatePassword = async (req: Request, res: Response) => {
         password: await bcryptjs.hash(body.password, 10)
     })
 
-    const /*{password,...data}*/ data = await repository.findOneBy({id: user.id})
+    const {password,...data} = await repository.findOneBy({id: user.id})
     return res.send(data)
 }
