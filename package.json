@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/index.ts",
-    "permission:seed": "ts-node src/seeder/role.seeder.ts"
+    "permission:seed": "ts-node src/seeder/role.seeder.ts",    
+    "product:seed": "ts-node src/seeder/product.seeder.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "typescript": "^4.7.3"
   },
   "dependencies": {
+    "@faker-js/faker": "^7.3.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
