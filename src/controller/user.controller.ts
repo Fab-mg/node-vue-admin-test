@@ -36,13 +36,21 @@ export const CreateUser = async (req: Request, res: Response) => {
     const repository = getManager().getRepository(User)
     const hashedPassword = bcryptjs.hash('1234', 10)
 
-    const user = await repository.save({
-        ...body,
-        password: hashedPassword,
-        role: {
-            id: role_id
-        }
-    })
+    const user = new User()
+    user.email = body.email
+    user.first_name = body.first_name
+    user.last_name = body.last_name
+    user.role = role_id
+    user.password = await bcryptjs.hash(body.password, 10)
+
+    await repository.save(user)
+    // const user = await repository.save({
+    //     ...body,
+    //     password: hashedPassword,
+    //     role: {
+    //         id: role_id
+    //     }
+    // })
     const {password,...data} = user
     return res.status(201).send(data)
 }
